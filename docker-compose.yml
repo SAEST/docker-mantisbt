@@ -1,0 +1,44 @@
+services:
+  mantisbt:
+    image: vimagick/mantisbt:latest
+    #image: mikroways/mantisbt
+    container_name: mantisbt
+    hostname: mantisbt
+    ports:
+      - "8989:80"
+      - "465:80" # SMTP port for email notifications
+      - "587:80" # SMTP port for email notifications
+    environment: # <-- ADD THESE ENVIRONMENT VARIABLES
+      - MANTISBT_DATABASE_TYPE=mysqli
+      - MANTISBT_DATABASE_HOST=db # Match the service name of your database container
+      - MANTISBT_DATABASE_NAME=bugtracker # Match MYSQL_DATABASE from your db service
+      - MANTISBT_DATABASE_USER=mantisbt # Match MYSQL_USER from your db service
+      - MANTISBT_DATABASE_PASSWORD=mantisbt # Match MYSQL_PASSWORD from your db service
+      # Also include your SMTP configuration for correo.ine.mx here
+      - MANTISBT_SMTP_HOST=correo.ine.mx
+      - MANTISBT_SMTP_PORT=587 # Or 465, depending on your SMTP server's actual config
+      - MANTISBT_SMTP_SECURE=tls # Or 'ssl'
+      - MANTISBT_SMTP_AUTH=true
+      - MANTISBT_SMTP_USER=ssioc
+      - MANTISBT_SMTP_PASS=2bhAnR5b5h
+      - MANTISBT_FROM_EMAIL=mantisbt@ine.mx
+      # Potentially needed for self-signed or internal certs (check official image docs if this is available as env var)
+      - MANTISBT_SMTP_OPTIONS_SSL_VERIFY_PEER=false
+      - MANTISBT_SMTP_OPTIONS_SSL_VERIFY_PEER_NAME=false
+      - MANTISBT_SMTP_OPTIONS_SSL_ALLOW_SELF_SIGNED=true
+    depends_on: # <-- Use depends_on instead of links for better dependency management
+      - db
+    restart: always
+
+  db: # <-- Changed service name from 'mysql' to 'db' for consistency with MANTISBT_DATABASE_HOST
+    image: mysql:5.7
+    container_name: db
+    hostname: db
+    volumes:
+      - ./data:/var/lib/mysql # This will create a 'data' folder in your current directory
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=bugtracker
+      - MYSQL_USER=mantisbt
+      - MYSQL_PASSWORD=mantisbt
+    restart: always
